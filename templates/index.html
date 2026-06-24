@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pindou - Bead Pattern Generator</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css?t={{ range(1, 10000) | random }}">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a class="header-logo" href="/">
+        <span data-i18n="app.brand">🍓 万物皆可拼</span>
+      </a>
+    </div>
+
+    <nav class="header-nav">
+      <button class="header-tab active" data-tab="generate" onclick="switchMainTab('generate')">
+        <span data-i18n="tab.image_generate">✨ Image Generation</span>
+      </button>
+      <button class="header-tab" data-tab="pattern" onclick="switchMainTab('pattern')">
+        <span data-i18n="tab.pattern_generate">🎨 Pattern Generation</span>
+      </button>
+      <button class="header-tab" data-tab="tasks" onclick="switchMainTab('tasks')">
+        <span data-i18n="tab.bead_board">🧺 Bead Board</span>
+      </button>
+    </nav>
+    
+    <div class="header-right">
+      <button id="lang-toggle" class="header-lang-btn" onclick="toggleLanguage()">
+        <span id="lang-label">EN</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ==================== Tab 1: Image Generation ==================== -->
+  <div id="tab-generate" class="tab-content active">
+    <div class="generate-container">
+
+      <!-- Left Panel: Input -->
+      <div class="generate-left">
+        <!-- Prompt Input -->
+        <div class="section" style="border-top: none; padding-top: 0;">
+          <div class="section-title" data-i18n="generate.prompt">Prompt</div>
+          <textarea id="generate-prompt" class="prompt-input" rows="4" placeholder="Describe the image you want to generate">{xxx}，纯白色背景，图片比例1*1，像素化，超粗糙，减少细节</textarea>
+        </div>
+
+        <!-- Model Selection -->
+        <div class="section">
+          <div class="section-title" data-i18n="generate.model">Model</div>
+          <select id="model-select" class="model-select">
+            <option value="ep-m-20260403150322-jjxqm" selected>豆包Seedream模型</option>
+          </select>
+        </div>
+
+        <!-- Reference Image (Optional) -->
+        <div class="section">
+          <div class="section-title" data-i18n="generate.reference_image">Reference Image (Optional)</div>
+          <div id="ref-upload-area" class="ref-upload-area">
+            <div class="ref-upload-icon">↑</div>
+            <div class="ref-upload-text" data-i18n="generate.ref_hint">Upload reference image</div>
+          </div>
+          <input type="file" id="ref-file-input" class="hidden-input" accept="image/jpeg,image/png,image/gif,image/webp">
+          <div id="ref-preview" class="ref-preview" style="display: none;">
+            <img id="ref-preview-image" alt="Reference">
+            <button class="ref-remove-btn" onclick="clearRefImage()">×</button>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <div class="section" style="border-top: none;">
+          <button id="generate-image-btn" class="btn btn-primary btn-large" onclick="generateImage()">
+            ✨ <span data-i18n="btn.generate_image">生成图像</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Middle Panel: Output -->
+      <div class="generate-middle">
+        <!-- Empty State -->
+        <div id="generate-empty" class="generate-empty">
+          <div class="generate-empty-icon">✨</div>
+          <div class="generate-empty-text" data-i18n="generate.empty">输入提示词开始生成图像</div>
+        </div>
+
+        <!-- Generated Image -->
+        <div id="generate-result" class="generate-result" style="display: none;">
+          <img id="generated-image" class="generated-image" alt="Generated">
+          <div class="generate-actions">
+            <button class="btn btn-secondary" onclick="downloadGeneratedImage()">
+              ↓ <span data-i18n="btn.download">Download Image</span>
+            </button>
+            <button class="btn btn-primary" onclick="sendToPattern()">
+              → <span data-i18n="btn.send_to_pattern">Send to Pattern</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: History -->
+      <div class="generate-history">
+        <div class="history-header">
+          <div class="history-title" data-i18n="generate.history">历史图片</div>
+          <button class="history-clear-btn" data-i18n="btn.clear" onclick="clearArtPicHistory()">清空</button>
+        </div>
+        <div id="history-list" class="history-list">
+          <div class="history-empty" data-i18n="generate.history_empty">暂无历史图片</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== Tab 2: Pattern Generation ==================== -->
+  <div id="tab-pattern" class="tab-content">
+    <div class="main-container">
+
+      <!-- Left Panel -->
+      <div class="left-panel">
+
+        <!-- Upload Section - Side by Side Layout -->
+        <div class="upload-section">
+          <div id="upload-area" class="upload-area">
+            <div class="upload-area-inner">
+              <div class="upload-area-icon">+</div>
+              <div class="upload-area-text" data-i18n="upload.drop_hint">Drop image here or click to upload</div>
+              <div class="upload-area-hint" data-i18n="upload.format_hint">JPG, PNG, GIF, WEBP</div>
+            </div>
+          </div>
+          <input type="file" id="file-input" class="hidden-input" accept="image/jpeg,image/png,image/gif,image/webp">
+          
+          <div id="preview-section" class="preview-section" style="display: none;">
+            <img id="preview-image" class="preview-image" alt="Preview">
+          </div>
+        </div>
+
+        <!-- Settings Panel - Always Visible -->
+        <div id="settings-panel">
+
+          <!-- Palette Preset -->
+          <div class="section" style="border-top: none; padding-top: 12px;">
+            <div class="section-title" data-i18n="settings.palette_preset">Palette Preset</div>
+            <div class="preset-group">
+              <button class="preset-btn" data-preset="96" onclick="setPreset('96')">96</button>
+              <button class="preset-btn" data-preset="120" onclick="setPreset('120')">120</button>
+              <button class="preset-btn" data-preset="144" onclick="setPreset('144')">144</button>
+              <button class="preset-btn" data-preset="168" onclick="setPreset('168')">168</button>
+              <button class="preset-btn active" data-preset="221" onclick="setPreset('221')">221</button>
+            </div>
+          </div>
+
+          <!-- Grid Size -->
+          <div class="section">
+            <div class="section-title" data-i18n="settings.board_size">Bead Board Size</div>
+
+            <div class="radio-group" style="margin-bottom: 12px;">
+              <label class="radio-item">
+                <input type="radio" name="grid-mode" value="fixed" checked onchange="setGridMode('fixed')">
+                <span data-i18n="settings.fixed_grid">Fixed Grid</span>
+              </label>
+              <label class="radio-item">
+                <input type="radio" name="grid-mode" value="pixel" onchange="setGridMode('pixel')">
+                <span data-i18n="settings.pixel_block">Pixel Block Size</span>
+              </label>
+            </div>
+
+            <div id="grid-fixed-options">
+              <select id="grid-size-select">
+                <option value="15x15">15 x 15 pegs (small)</option>
+                <option value="29x29">29 x 29 pegs (1 board)</option>
+                <option value="32x32">32 x 32 pegs</option>
+                <option value="48x48">48 x 48 pegs</option>
+                <option value="52x52" selected>52 x 52 pegs (2x2 boards)</option>
+                <option value="64x64">64 x 64 pegs</option>
+                <option value="87x87">87 x 87 pegs (3x3 boards)</option>
+                <option value="96x96">96 x 96 pegs</option>
+              </select>
+            </div>
+
+            <div id="grid-pixel-options" style="display: none;">
+              <label class="form-label">
+                <span data-i18n="settings.pixel_block_label">Pixel block size:</span> <span id="pixel-size-value">8px</span>
+              </label>
+              <input type="range" id="pixel-size-slider" min="4" max="32" value="8" step="1">
+            </div>
+          </div>
+
+          <!-- Color Controls -->
+          <div class="section">
+            <div class="section-title" data-i18n="settings.color_controls">Color Controls</div>
+
+            <label class="form-label">
+              <span data-i18n="settings.max_colors">Max colors:</span> <span id="max-colors-value">Auto</span>
+            </label>
+            <input type="range" id="max-colors-slider" min="0" max="60" value="0" step="1">
+
+            <label class="form-label" style="margin-top: 12px;">
+              <span data-i18n="settings.merge_threshold">Color merge threshold:</span> <span id="similarity-value">Off</span>
+            </label>
+            <input type="range" id="similarity-slider" min="0" max="50" value="0" step="1">
+          </div>
+
+          <!-- Image Adjustments -->
+          <div class="section">
+            <div class="section-title" data-i18n="settings.image_adjustments">Image Adjustments</div>
+
+            <label class="form-label">
+              <span data-i18n="settings.contrast">Contrast:</span> <span id="contrast-value">Auto</span>
+            </label>
+            <input type="range" id="contrast-slider" min="-50" max="50" value="0" step="1">
+
+            <label class="form-label" style="margin-top: 8px;">
+              <span data-i18n="settings.saturation">Saturation:</span> <span id="saturation-value">Auto</span>
+            </label>
+            <input type="range" id="saturation-slider" min="-50" max="50" value="0" step="1">
+
+            <label class="form-label" style="margin-top: 8px;">
+              <span data-i18n="settings.sharpness">Sharpness:</span> <span id="sharpness-value">Auto</span>
+            </label>
+            <input type="range" id="sharpness-slider" min="-50" max="50" value="0" step="1">
+          </div>
+
+          <!-- Dithering -->
+          <div class="section">
+            <div class="section-title" data-i18n="settings.dithering">Dithering</div>
+            <label class="checkbox-item">
+              <input type="checkbox" id="dithering-checkbox">
+              <span data-i18n="settings.enable_dithering">Enable Floyd-Steinberg dithering</span>
+            </label>
+          </div>
+
+          <!-- Export Settings -->
+          <div class="section">
+            <div class="section-title" data-i18n="settings.export_settings">Export Settings</div>
+            <label class="checkbox-item" style="margin-bottom: 8px;">
+              <input type="checkbox" id="remove-bg-checkbox" checked>
+              <span data-i18n="settings.auto_remove_bg">Auto remove background</span>
+            </label>
+            <label class="form-label" style="margin-bottom: 4px; margin-top: 8px;">
+              <span data-i18n="settings.watermark_text">Watermark:</span>
+            </label>
+            <input type="text" id="watermark-text" class="text-input" placeholder="@脆脆脆薯饼" value="">
+            <label class="form-label" style="margin-bottom: 4px; margin-top: 10px;">
+              <span data-i18n="settings.bottom_left_text">图纸标注文案:</span>
+            </label>
+            <input type="text" id="bottom-left-text" class="text-input" placeholder="pindou-一个脆薯饼" value="">
+          </div>
+
+          <!-- Generate Button -->
+          <div class="section" style="border-top: none; padding-top: 8px;">
+            <div style="display: flex; gap: 8px;">
+              <button id="reset-btn" class="btn btn-secondary" onclick="resetSettings()">↺ <span data-i18n="btn.reset">Reset</span></button>
+              <button id="generate-btn" class="btn btn-primary" style="flex: 1;">✦ <span data-i18n="btn.make_pattern">制作图纸</span></button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="right-panel">
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state">
+          <div class="empty-state-icon">✨</div>
+          <div class="empty-state-text" data-i18n="result.empty">Upload an image and generate a pattern</div>
+        </div>
+
+        <!-- Result Area -->
+        <div id="result-area" style="display: none; width: 100%;">
+
+          <!-- Canvas Toolbar -->
+          <div class="canvas-toolbar">
+            <button id="edit-toggle" class="toggle-btn" onclick="toggleEditMode()">✎ <span data-i18n="btn.edit">编辑</span></button>
+            <div style="flex: 1;"></div>
+            <button class="btn btn-secondary" onclick="exportPNG()">↓ <span data-i18n="btn.export_png">Export PNG</span></button>
+            <button class="btn btn-secondary" onclick="exportMirrorPNG()">↓ <span data-i18n="btn.export_mirror">导出镜像</span></button>
+            <button class="btn btn-secondary" onclick="saveCurrentPatternAsTask()">💾 <span data-i18n="btn.save_task">Save as Task</span></button>
+          </div>
+
+          <!-- Color Panel - Moved to Top -->
+          <div class="color-panel">
+            <div class="color-panel-title" data-i18n="result.colors_used">Colors Used</div>
+            <div id="color-list" class="color-list"></div>
+            <div id="color-total" class="color-total"></div>
+          </div>
+
+          <!-- Main Canvas -->
+          <div class="canvas-container" style="width: 100%;">
+            <canvas id="pattern-canvas"></canvas>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Tab 3: Bead Board (拼豆盘) ==================== -->
+  <div id="tab-tasks" class="tab-content">
+    <div class="tasks-container">
+      
+      <!-- Left Panel: Task Grid -->
+      <div class="tasks-left">
+        <div class="tasks-header">
+          <div class="tasks-header-row">
+            <h2 data-i18n="tasks.title">My Bead Tasks</h2>
+            <div id="tasks-total" class="tasks-total"></div>
+            <!-- Search Bar -->
+            <div class="tasks-search">
+              <input type="text" id="task-search-input" class="task-search-input" placeholder="Search tasks..." oninput="searchTasks(this.value)">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Task Grid -->
+        <div id="task-list" class="task-grid">
+          <div class="task-empty" data-i18n="tasks.empty">No tasks yet.</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Task Detail Modal -->
+  <div id="task-modal" class="task-modal" style="display: none;">
+    <div class="task-modal-overlay" onclick="closeTaskModal()"></div>
+    <div class="task-modal-content">
+      <div class="task-modal-header">
+        <input type="text" id="modal-task-name" class="task-name-input" placeholder="Task name">
+        <button class="task-modal-close" onclick="closeTaskModal()">×</button>
+      </div>
+      <div class="task-modal-body">
+        <!-- Preview Section -->
+        <div class="task-preview-section">
+          <div class="section-title" data-i18n="tasks.preview">Preview</div>
+          <div class="task-preview-container">
+            <img id="modal-task-preview" class="task-preview-image" alt="Preview">
+          </div>
+        </div>
+        
+        <!-- Color Summary -->
+        <div class="task-colors-section">
+          <div class="section-title" data-i18n="tasks.colors">Color Summary</div>
+          <div id="modal-task-colors" class="task-color-list"></div>
+        </div>
+        
+        <!-- Task Info -->
+        <div class="task-info-section">
+          <div class="task-info-grid">
+            <div class="task-info-item">
+              <span class="info-label" data-i18n="tasks.grid_size">Size:</span>
+              <span id="modal-task-size" class="info-value">-</span>
+            </div>
+            <div class="task-info-item">
+              <span class="info-label" data-i18n="tasks.total_beads">Total Beads:</span>
+              <span id="modal-task-beads" class="info-value">-</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="task-modal-actions">
+          <button class="btn btn-danger" onclick="deleteCurrentTask()">
+            <span data-i18n="tasks.delete">Delete</span>
+          </button>
+          <button class="btn btn-primary" onclick="continueTask()" style="margin-left: auto;">
+            <span data-i18n="tasks.continue">Continue</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Dialog Modal -->
+  <div id="confirm-modal" class="confirm-modal" style="display: none;">
+    <div class="confirm-overlay" onclick="closeConfirmDialog()"></div>
+    <div class="confirm-dialog">
+      <div class="confirm-title" id="confirm-title">Confirm</div>
+      <div class="confirm-message" id="confirm-message">Are you sure?</div>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" onclick="closeConfirmDialog()">
+          <span data-i18n="btn.cancel">Cancel</span>
+        </button>
+        <button class="btn btn-danger" id="confirm-btn" onclick="confirmAction()">
+          <span data-i18n="btn.confirm">Confirm</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/i18n.js?t={{ range(1, 10000) | random }}"></script>
+  <script src="/static/app.js?t={{ range(1, 10000) | random }}"></script>
+</body>
+</html>

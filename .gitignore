@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Uploaded files
+uploads/
+
+# 运行时生成的拼豆图片产物与任务数据（仅本地，不纳入版本控制）
+pindou_pic/*.png
+pindou_pic/*.json
+pindou_task/tasks.json
+
+# Test artifacts
+/tmp/
+
+# OpenWolf context management (local only)
+.wolf/
