@@ -107,4 +107,8 @@ PORT=8080
 
 ## 许可证
 
-MIT License
+MIT License（仅适用于本项目原创源代码，色卡等第三方数据详见 [NOTICE](NOTICE)）
+
+## 声明
+
+本项目与 Artkal 品牌无隶属或合作关系，"Artkal" 仅作事实性兼容描述。色卡数据来源于公开资料，版权归原作者所有。详见 [NOTICE](NOTICE)。本项目仅供个人非商业使用。
